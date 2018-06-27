@@ -35,7 +35,6 @@ exports.resize = async (req, res, next) => {
 }
 
 exports.homePage = (req, res) => {
-	console.log(req.name);
 	req.flash('error', 'Something happened');
 	req.flash('info', 'Something happened');
 	req.flash('warning', 'Something happened');
@@ -57,7 +56,6 @@ exports.createStore = async (req, res) => {
 exports.getStores = async (req, res) => {
 	// 1. Query the database for a list of all stores
 	const stores = await (Store.find());
-	console.log(stores);
 	res.render('stores', {title: 'Stores', stores: stores});
 }
 
@@ -82,3 +80,20 @@ exports.updateStore = async (req, res) => {
 	res.redirect(`/stores/${store._id}/edit`);
 	//redirect them to the store and tell them it worked
 }
+
+exports.getStoreBySlug = async (req, res, next) => {
+	const store = await Store.findOne({ slug: req.params.slug  });
+	if(!store) return next();
+	res.render('store', { store, title: store.name});
+
+};
+
+exports.getStoresByTag = async (req, res) => {
+	const tag = req.params.tag;
+	const tagQuery = tag || {$exists: true};
+	const tagsPromise = Store.getTagsList();
+	const storesPromise = Store.find({ tags: tagQuery });
+	const [tags, stores] = await Promise.all([tagsPromise, storesPromise]);
+
+	res.render('tags', { tags, title: 'Tags', tag, stores});
+};
